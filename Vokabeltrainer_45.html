@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vokabeltrainer</title>
+  <style>
+
+    
+ /* Grundlegendes Styling */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+  background-image: url(https://cdn.shopify.com/s/files/1/0450/9168/4518/files/Skizze-architektur2.jpg);
+  background-attachment: scroll;
+  background-size: cover;
+  background-position: center;
+}
+
+.container {
+  background: linear-gradient(180deg, #f5fcff 0%, #67acd526 50%, #fff0 100%);
+  padding: 20px;
+  border-radius: 8px;
+  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */
+  
+  text-align: center;
+  width: 90%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  min-height: 800px;
+}
+
+.word-display {
+  margin: 20px 0;
+  height: 50px;
+  padding-top: 55px;
+}
+
+.word {
+  font-size: 24px;
+  margin: 10px 0;
+}
+
+.blurred {
+  filter: blur(5px);
+}
+
+/* Buttons und Bedienelemente */
+.controls {
+  margin-top: 10px;
+}
+
+.controls button,
+#search-btn, #save-localstorage-btn {
+  margin: 5px;
+  padding: 10px 15px;
+  border: none;
+  background-color: #16579D;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 190px;
+  margin: 0 auto;
+  margin-top: 10px;
+}
+
+.controls button:hover,
+#search-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Input-Felder */
+input[type="text"],
+#search-input {
+  padding: 10px;
+  font-size: 16px;
+  margin-top: 30px;
+  width: 80%;
+  max-width: 400px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-align: center;
+
+}
+
+/* Feedback-Styling */
+#feedback {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  height: 20px;
+}
+
+.correct {
+  color: green;
+}
+
+.incorrect {
+  color: red;
+}
+
+/* Wortliste */
+#word-list {
+  text-align: left;
+  margin-top: 20px;
+  padding: 10px;
+  max-height: 300px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  scrollbar-width: thin; /* Für Firefox */
+  scrollbar-color: #888 #f1f1f1;
+}
+
+#word-list.open {
+  opacity: 1;
+  width: 600px;
+  margin: auto;
+}
+
+/* Scrollbar für Webkit-basierte Browser */
+#word-list::-webkit-scrollbar {
+  width: 12px;
+}
+
+#word-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+#word-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+#word-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Vokabel-Elemente */
+.vocab-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+
+.vocab-item span {
+  flex: 1;
+  text-align: center;
+}
+
+.arrow {
+  flex: 0;
+  font-size: 20px;
+  margin: 0 10px;
+}
+
+/* Unschärfe-Animation */
+.sharp {
+  cursor: pointer;
+  filter: blur(5px);
+  transition: filter 0.2s ease-in-out;
+}
+
+.sharp.shown {
+  filter: none;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  overflow: auto;
+  animation: fadeIn 0.5s ease;
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 600px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: scale(0.8);
+  animation: popUp 0.5s forwards;
+}
+
+/* Schließ-Button */
+.close-btn {
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  transform: scale(1.2);
+  color: #2b2b2b;
+}
+
+/* Modal-Animation */
+@keyframes popUp {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Suchergebnisse */
+#search-results {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #333;
+  line-height: 1.5;
+}
+
+#search-results p {
+  padding: 10px;
+  background-color: #f7f7f7;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+.search-container {
+  margin-top: 85px;
+}
+
+
+#direction, #mode {
+  width: 100%; /* Volle Breite für Flexibilität */
+  max-width: 400px; /* Maximale Breite für Konsistenz */
+  padding: 10px; /* Innenabstand für besseren Textabstand */
+  font-size: 16px; /* Größere Schrift für bessere Lesbarkeit */
+  border: 1px solid #ccc; /* Standardrahmen */
+  border-radius: 5px; /* Abgerundete Ecken */
+  background: linear-gradient(180deg, #ffffff, #e6e6e6); /* Sanfter Verlauf */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Dezenter Schatten */
+  cursor: pointer; /* Zeigt Klickbarkeit an */
+  transition: all 0.3s ease; /* Sanfter Übergang bei Interaktion */
+  appearance: none; /* Entfernt Standard-Browser-Stil */
+  text-align: center; /* Text zentriert */
+}
+
+#direction:hover, #mode:hover {
+  border-color: #16579D; /* Ändert Rahmenfarbe bei Hover */
+  background: linear-gradient(180deg, #f0f9ff, #cce7f9); /* Heller Verlauf bei Hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Erhöht Schatten bei Hover */
+}
+
+#direction:focus, #mode:focus {
+  border-color: #16579D; /* Rahmenfarbe bei Fokus */
+  box-shadow: 0 0 6px rgba(22, 87, 157, 0.5); /* Leuchtender Fokus-Effekt */
+  outline: none; /* Entfernt Standard-Fokus */
+}
+
+
+
+#direction option, #mode option {
+  padding: 10px; /* Zusätzlicher Innenabstand für Optionen */
+  background-color: #ffffff; /* Weißer Hintergrund */
+  color: #333; /* Standardtextfarbe */
+}
+
+#direction option:hover, #mode option:hover {
+  background-color: #f0f9ff; /* Heller Hintergrund bei Hover */
+  color: #16579D; /* Textfarbe bei Hover */
+}
+
+
+@media (max-width: 768px) {
+  #user-input {
+    font-size: 14px; /* Kleinere Schriftgröße für Tablets */
+    padding: 8px; /* Reduzierter Innenabstand */
+    max-width: 90%; /* Breite fast über den gesamten Bildschirm */
+  }
+
+}
+
+@media (max-width: 480px) {
+  #user-input {
+    font-size: 16px; /* Noch kleinere Schrift für Smartphones */
+    padding: 22px; /* Kleinerer Innenabstand */
+    max-width: 90% !important; /* Volle Breite für kleinere Bildschirme */
+  }
+
+  input[type="text"] {
+    min-width: 75% !important;
+  }
+
+  #word-list.open {
+    max-width: 80% !important;
+  }
+
+  .controls button, #search-btn {
+  font-size: 18px;
+  }
+
+  input[type="text"], #search-input {
+    padding: 22px;
+  }
+
+  .search-container {
+    margin-top: 10px;
+  }
+
+  .word-display {
+  padding-top: 5px;
+}
+
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div id="search-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Gefundene Wörter</h2>
+        <div id="search-results"></div>
+      </div>
+    </div>
+
+
+    <h1>Vokabeltrainer</h1>
+    <div class="settings">
+      <label for="direction"></label>
+      <select id="direction">
+        <option value="de-en">Deutsch ➔ Englisch</option>
+        <option value="en-de">Englisch ➔ Deutsch</option>
+      </select>
+      <label for="mode"></label>
+      <select id="mode">
+        <option value="vocabulary">Vokabeln</option>
+        <option value="phrases">Phrasen</option>
+      </select>
+    </div>
+    <div class="word-display">
+      <div id="question" class="word"></div>
+      <div id="answer" class="word blurred"></div>
+    </div>
+
+
+
+    <div>
+      <input type="text" id="user-input" placeholder="Übersetzung eingeben..." />
+      <div class="controls">
+        <button id="toggle-hint">Lösung andeuten</button>
+        <button id="next-word">Nächstes Wort</button>
+       
+      </div>
+
+      <div id="feedback" class="feedback"></div>
+    </div>
+
+
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="Wörterbuch durchsuchen..." />
+      
+    </div>
+<button id="search-btn">Suche</button>
+    
+
+<div>
+  <input type="text" id="new-word-de" placeholder="Neues deutsches Wort..." />
+  <input type="text" id="new-word-en" placeholder="Neue englische Übersetzung..." />
+  <button id="add-word-btn">Wort hinzufügen</button>
+</div>
+<div>
+</div>
+<button class="controls button" id="save-localstorage-btn">Alle Wörter als TXT speichern</button>
+
+    <div class="controls"><button id="show-all">Alle Wörter anzeigen</button></div>
+    <div id="word-list"></div>
+
+    
+
+
+  </div>
+
+
+
+
+  <script>
+
+
+document.getElementById("save-localstorage-btn").addEventListener("click", function() {
+  // Lese den Inhalt des localStorage
+  const storedVocabulary = localStorage.getItem("vocabulary");
+  const storedPhrases = localStorage.getItem("phrases");
+
+  // Bereite den Inhalt vor
+  let content = "LocalStorage Inhalte:\n\n";
+
+  if (storedVocabulary) {
+    content += "Vocabulary:\n" + JSON.stringify(JSON.parse(storedVocabulary), null, 2) + "\n\n";
+  } else {
+    content += "Keine Vokabeln im localStorage gespeichert.\n\n";
+  }
+
+  if (storedPhrases) {
+    content += "Phrasen:\n" + JSON.stringify(JSON.parse(storedPhrases), null, 2) + "\n\n";
+  } else {
+    content += "Keine Phrasen im localStorage gespeichert.\n\n";
+  }
+
+  // Erstelle eine Blob-Datei aus dem Inhalt
+  const blob = new Blob([content], { type: "text/plain" });
+
+  // Erstelle eine URL für die Blob-Datei
+  const url = URL.createObjectURL(blob);
+
+  // Erstelle ein unsichtbares <a>-Element, um den Download zu ermöglichen
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "localStorage_export.txt"; // Dateiname
+  document.body.appendChild(a);
+  
+  // Klicke das <a>-Element, um den Download zu starten
+  a.click();
+  
+  // Entferne das <a>-Element und revoke die URL
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+
+
+
+
+
+function loadFromLocalStorage() {
+  const storedVocabulary = localStorage.getItem("vocabulary");
+  const storedPhrases = localStorage.getItem("phrases");
+
+  if (storedVocabulary) vocabulary.push(...JSON.parse(storedVocabulary));
+  if (storedPhrases) phrases.push(...JSON.parse(storedPhrases));
+}
+
+function saveToLocalStorage() {
+  localStorage.setItem("vocabulary", JSON.stringify(vocabulary));
+  localStorage.setItem("phrases", JSON.stringify(phrases));
+}
+
+window.onload = function() {
+  loadFromLocalStorage();
+  getRandomWord();
+};
+
+
+
+document.getElementById("add-word-btn").addEventListener("click", function() {
+  const newWordDe = document.getElementById("new-word-de").value.trim();
+  const newWordEn = document.getElementById("new-word-en").value.trim();
+
+  if (newWordDe && newWordEn) {
+    if (currentMode === "vocabulary") {
+      vocabulary.push({ de: newWordDe, en: newWordEn });
+    } else {
+      phrases.push({ de: newWordDe, en: newWordEn });
+    }
+
+    saveToLocalStorage(); // Speichern im localStorage
+    alert(`Wort "${newWordDe} ↔ ${newWordEn}" wurde hinzugefügt!`);
+    clearNewWordInputs();
+    showAllWords();
+  } else {
+    alert("Bitte füllen Sie beide Felder aus.");
+  }
+});
+
+function clearNewWordInputs() {
+  document.getElementById("new-word-de").value = '';
+  document.getElementById("new-word-en").value = '';
+}
+
+
+
+
+    const vocabulary = [
+    { de: "ablösen", en: "compensate" },
+{ de: "Abwasser", en: "sewage" },
+{ de: "Anbieter", en: "provider" },
+{ de: "angefordert", en: "requested" },
+{ de: "angenehm", en: "pleasant" },
+{ de: "antworten", en: "respond" },
+{ de: "Arbeitsvertrag", en: "employment contract" },
+{ de: "auffordern", en: "request" },
+{ de: "Ausbildung", en: "apprenticeship" },
+{ de: "ausführlich", en: "detailed" },
+{ de: "ausreichend", en: "sufficient" },
+{ de: "Ausweis", en: "id-card" },
+{ de: "ausziehen", en: "move out" },
+{ de: "ausziehen", en: "leave" },
+{ de: "Auszubildender", en: "apprentice" },
+{ de: "Badewanne", en: "bathtub" },
+{ de: "beachten", en: "aware something" },
+{ de: "Beleuchtung", en: "lighting" },
+{ de: "bemerkenswert", en: "remarkable" },
+{ de: "Bemühung", en: "effort" },
+{ de: "bereits", en: "almost" },
+{ de: "berücksichtigt", en: "considered" },
+{ de: "Berufsausbildung", en: "vocational training" },
+{ de: "beruhigen", en: "calm down" },
+{ de: "beschließen", en: "decide" },
+{ de: "beschlossen", en: "decided" },
+{ de: "bestätigen", en: "confirm" },
+{ de: "bestimmte", en: "certain" },
+{ de: "Betriebskosten", en: "operating cost" },
+{ de: "Betrug", en: "fraud" },
+{ de: "Bewertung", en: "review" },
+{ de: "Bohrmaschine", en: "drilling machine" },
+{ de: "Briefkasten", en: "letter box" },
+{ de: "Briefkasten", en: "mailbox" },
+{ de: "buchen", en: "posting" },
+{ de: "Bürgersteig", en: "sidewalk" },
+{ de: "Bürgschaft", en: "guarantor" },
+{ de: "Bürgschaft", en: "guarantee" },
+{ de: "Bürgschaftserklärung", en: "guarantor declaration" },
+{ de: "Dach", en: "roof" },
+{ de: "Dach", en: "the roof" },
+{ de: "Dachboden", en: "attic" },
+{ de: "Dachbodenabteil", en: "attic compartment" },
+{ de: "Dachdecker", en: "the roofer" },
+{ de: "Dachrinne", en: "gutter" },
+{ de: "Dachziegel", en: "roof tiles" },
+{ de: "Decke", en: "ceiling" },
+{ de: "Decken", en: "ceiling" },
+{ de: "defekt", en: "defective" },
+{ de: "defekt", en: "defect" },
+{ de: "dementsprechend", en: "accordingly" },
+{ de: "dezentral", en: "decentralized" },
+{ de: "Duschstange", en: "shower rod" },
+{ de: "Duschwand", en: "shower screen" },
+{ de: "ebenfalls", en: "also" },
+{ de: "ehrlich", en: "honest" },
+{ de: "Eigentümer", en: "owner" },
+{ de: "einbehalten", en: "retain" },
+{ de: "einbeziehen", en: "involve" },
+{ de: "Einrichtungsgegenstände", en: "furnishings" },
+{ de: "Einrichtungsgegenstände", en: "furnishings" },
+{ de: "entschuldigen", en: "apologize" },
+{ de: "Entwurf", en: "draft" },
+{ de: "Errungenschaft", en: "accomplishment" },
+{ de: "erwähnen", en: "mention" },
+{ de: "fast", en: "already" },
+{ de: "Fenstergriff", en: "window handle" },
+{ de: "Flur", en: "hallway" },
+{ de: "Freigabe", en: "approval" },
+{ de: "Freigabe", en: "release" },
+{ de: "Fusbodenheizung", en: "underfloor heating" },
+{ de: "Gardinen", en: "curtains" },
+{ de: "Gaszähler", en: "gas meter" },
+{ de: "Geduld", en: "patience" },
+{ de: "geeignet", en: "suitable" },
+{ de: "Gehaltsabrechnung", en: "salary statement" },
+{ de: "gerechtfertigt", en: "justified" },
+{ de: "gerechtfertigt", en: "justified" },
+{ de: "Geschirr", en: "dishes" },
+{ de: "Geschirrspülmaschine", en: "dishwasher" },
+{ de: "Gewerbemieter", en: "commercial tenant" },
+{ de: "glücklich", en: "happy" },
+{ de: "Grundstück", en: "property" },
+{ de: "Handtuchhalter", en: "the towel holder" },
+{ de: "Handwerker", en: "craftsman" },
+{ de: "Haus", en: "house" },
+{ de: "Hausmeister", en: "caretaker" },
+{ de: "Haustür", en: "front door" },
+{ de: "Hausverwalter", en: "the propertymanagement" },
+{ de: "Heizkörper", en: "radiator" },
+{ de: "Heizung", en: "heating" },
+{ de: "Heizungsbauer", en: "the heating company" },
+{ de: "Heizungspumpe", en: "heating pump" },
+{ de: "Herd", en: "stove" },
+{ de: "Herdplatte", en: "stovetop" },
+{ de: "hinsichtlich", en: "regarding" },
+{ de: "Hof", en: "yard" },
+{ de: "Immobilie", en: "property" },
+{ de: "Immobilieneigentümer", en: "real estate owner" },
+{ de: "Immobilienmarkler", en: "real estate agent" },
+{ de: "Immobilienverwaltung", en: "property management" },
+{ de: "inbegriffen", en: "included" },
+{ de: "Industriekaufmann", en: "industrial clerk" },
+{ de: "Isolierung", en: "insulation" },
+{ de: "Kaltmiete", en: "basic rent" },
+{ de: "Kamin", en: "chimney" },
+{ de: "Kanalisation", en: "sewerage system" },
+{ de: "Kaution", en: "deposit" },
+{ de: "Keller", en: "basement" },
+{ de: "Kellerabteil", en: "basement storage" },
+{ de: "klären", en: "clarify" },
+{ de: "Klimaanlage", en: "aircondition" },
+{ de: "Kühlschrank", en: "refrigerator" },
+{ de: "kümmern", en: "to take care" },
+{ de: "Kündigungsausschluss", en: "waiver of termination rights" },
+{ de: "lächerlich", en: "ridiculous" },
+{ de: "lauwarm", en: "lukewarm" },
+{ de: "leider", en: "unfortunately" },
+{ de: "Lohn", en: "salery" },
+{ de: "Lüftung", en: "ventilation" },
+{ de: "manchmal", en: "sometimes" },
+{ de: "Mangel", en: "issue" },
+{ de: "Mängel", en: "defects" },
+{ de: "Mehrfamilienhaus", en: "apartment building" },
+{ de: "Mehrfamilienhaus", en: "residential building" },
+{ de: "Miete", en: "rent" },
+{ de: "Mieter", en: "the tenant" },
+{ de: "Mieterselbstauskunft", en: "tenant self-disclosure form" },
+{ de: "Mietinteressent", en: "prospective tenant" },
+{ de: "Mietkürzung", en: "rent reduction" },
+{ de: "Mietminderung", en: "rent reduction" },
+{ de: "Mietvertrag", en: "rental agreement" },
+{ de: "Mischbatterie", en: "faucet" },
+{ de: "Missverständnis", en: "misunderstanding" },
+{ de: "Mitbewohner", en: "roommate" },
+{ de: "Möbel", en: "furniture" },
+{ de: "Mülltonnen", en: "trash can" },
+{ de: "Nachmieter", en: "new tenant" },
+{ de: "Nebenkosten", en: "additional cost" },
+{ de: "Nebenkostenabrechnung", en: "utility bill reconciliation" },
+{ de: "Neugestaltung", en: "redesign" },
+{ de: "Parkausweis", en: "parking permit" },
+{ de: "Parkettboden", en: "parquet floor" },
+{ de: "Personalausweis", en: "identity card" },
+{ de: "Pfanne", en: "pan" },
+{ de: "Preisnachlass", en: "discount" },
+{ de: "Provision", en: "commission" },
+{ de: "Rechnung", en: "invoice" },
+{ de: "regelmäßig", en: "regulary" },
+{ de: "renovieren", en: "renovate" },
+{ de: "Renovierung", en: "renovation" },
+{ de: "Reparatur", en: "the repair" },
+{ de: "Rollo", en: "roller blind" },
+{ de: "Rollos", en: "blinds" },
+{ de: "Router", en: "router" },
+{ de: "Rückgabe", en: "return" },
+{ de: "Rückgebäude", en: "the back building" },
+{ de: "Rückruf", en: "follow-up call" },
+{ de: "Rückzahlung", en: "repayment" },
+{ de: "Ruhezeiten", en: "quiet hours" },
+{ de: "Sanierung", en: "refurbishment" },
+{ de: "schade", en: "pity" },
+{ de: "Schadensersatzansprüche", en: "compensation claims" },
+{ de: "Schadensersatzansprüche", en: "compensation claims" },
+{ de: "Schimmel", en: "mold" },
+{ de: "Schlauch", en: "hose" },
+{ de: "Schließzylinder", en: "lock cylinder" },
+{ de: "Schrank", en: "wardrobe" },
+{ de: "Schreiner", en: "carpenter" },
+{ de: "Sicherheitseinbehalt", en: "security retention" },
+{ de: "Sockelleiste", en: "skirting boards" },
+{ de: "Sofa", en: "couch" },
+{ de: "sparsam", en: "sparingly" },
+{ de: "speziell", en: "specific" },
+{ de: "Spülbecken", en: "sink" },
+{ de: "Stahltür", en: "door of steel" },
+{ de: "Stellplatz", en: "parking spaces" },
+{ de: "Stockwerk", en: "floor" },
+{ de: "Stromanbieter", en: "electricity provider" },
+{ de: "Stromsicherung", en: "protection of electricity" },
+{ de: "Stromzähler", en: "electricity meter" },
+{ de: "Telefondose", en: "phone jack" },
+{ de: "Thermostatkopf", en: "thermostatic head" },
+{ de: "Toilettensitz", en: "toilet seat" },
+{ de: "Topf", en: "pot" },
+{ de: "Türgriff", en: "door handle" },
+{ de: "Türgriff", en: "the door handle" },
+{ de: "Übergabe", en: "handover" },
+{ de: "übernehmen", en: "taking over" },
+{ de: "Überraschung", en: "surprise" },
+{ de: "Überweisen", en: "transfer" },
+{ de: "überzeugen", en: "convince" },
+{ de: "unbegründet", en: "unwarranted" },
+{ de: "ungefähr", en: "approximately" },
+{ de: "Untermieter", en: "subtenant" },
+{ de: "unzufrieden", en: "dissatisfied " },
+{ de: "veranlassen", en: "take further action" },
+{ de: "verfügbar", en: "available" },
+{ de: "vermeiden", en: "avoid" },
+{ de: "Vermieter", en: "landlord" },
+{ de: "vermutlich", en: "probably" },
+{ de: "vernünftig", en: "reasonable" },
+{ de: "versprechen", en: "promise" },
+{ de: "vielleicht", en: "maybe" },
+{ de: "vollständig", en: "complete" },
+{ de: "Vorauszahlung", en: "advance payment" },
+{ de: "Vorhängeschloss", en: "padlock" },
+{ de: "Vorlage", en: "template" },
+{ de: "vorlegen", en: "to provide" },
+{ de: "Vorschlag", en: "suggestion" },
+{ de: "Vorschlag", en: "suggestion" },
+{ de: "vorschlagen", en: "to suggest" },
+{ de: "Wand", en: "wall" },
+{ de: "Wände", en: "walls" },
+{ de: "Warmmiete", en: "the rent including bills" },
+{ de: "Warmwasserbereiter", en: "water heater" },
+{ de: "Wartungsfragen", en: "maintenance issues" },
+{ de: "Waschbecken", en: "sink" },
+{ de: "Waschmaschine", en: "washing machine" },
+{ de: "Wasserzähler", en: "water meter" },
+{ de: "WC-Schüssel", en: "toilett" },
+{ de: "weiterentwickeln", en: "refine" },
+{ de: "weiterleiten", en: "forward" },
+{ de: "Wiedervorlage", en: "follow-up / resubmission" },
+{ de: "Wohnung", en: "apartment building" },
+{ de: "Zufall", en: "coincidence" },
+{ de: "zufrieden", en: "satisfied" },
+{ de: "Zusage", en: "commitment" },
+{ de: "zusammenfassen", en: "aggregate" },
+{ de: "zusätzlich", en: "additional" },
+{ de: "zuverlässig", en: "reliable" },
+{ de: " jedoch", en: "however" },
+{ de: "Aufträge abwickeln", en: "to handle tasks" },
+{ de: "dankbar sein", en: "to be grateful" },
+{ de: "ehrlich sein", en: "be honest" },
+{ de: "Elelktro Verteilerkasten", en: "fuxe box" },
+{ de: "Elelktro Verteilerkasten", en: "fuxe box" },
+{ de: "erste Miete", en: "first rent" },
+{ de: "erstes Stockwerk", en: "frist floor" },
+{ de: "etwas melden", en: "to report something" },
+{ de: "etwas weiterleiten", en: "forward something" },
+{ de: "Fenster kippen", en: "tilt the window" },
+{ de: "feuchte Luft", en: "humid air" },
+{ de: "fließend sprechen", en: "to speak fluenty" },
+{ de: "fristlose Kündigung", en: "immediate termination" },
+{ de: "gesamte Wohnung", en: "entire apartment" },
+{ de: "herzlichen Glückwunsch", en: "congratulations" },
+{ de: "herzlichen Glückwunsch", en: "congratulations" },
+{ de: "hoher Zeitaufwand", en: "considerable time" },
+{ de: "ich schätze", en: "i estimate" },
+{ de: "im Voraus", en: "in advance" },
+{ de: "in time", en: "rechtzeitig" },
+{ de: "intern weitergeleitet", en: "forwarded internally " },
+{ de: "jemanden begrüßen", en: "greet someone" },
+{ de: "kündigen vertrag", en: "terminate the contract" },
+{ de: "meine Vertretung", en: "my representation" },
+{ de: "nicht ausreichend", en: "not sufficient" },
+{ de: "noch bestehen", en: "still exists" },
+{ de: "offene Mietforderung", en: "open rent claims" },
+{ de: "Schlüssel übergeben", en: "hand over keys" },
+{ de: "sich auflösen", en: "dissolve" },
+{ de: "Termin ausmachen", en: "to make a appointment" },
+{ de: "the plumber", en: "der rohrreiniger" },
+{ de: "unbestimmte Zeit", en: "open end" },
+{ de: "Wände streichen", en: "to paint walls" },
+{ de: "zur Prüfung", en: "for review" },
+{ de: "auf jeden Fall", en: "definitley" },
+{ de: "bereitgestellt oder vorausgesetzt", en: "provided" },
+{ de: "bereitgestellt oder vorausgesetzt", en: "provided" },
+{ de: "das war überraschend", en: "that was surprising" },
+{ de: "der ausziehender Mieter", en: "the outgoing tenant" },
+{ de: "der ausziehender Mieter", en: "the outgoing tenant" },
+{ de: "der Wasserhahn tropft", en: "the faucet drips" },
+{ de: "einen Rat geben", en: "to give an adive" },
+{ de: "einen Vorgang anlegen", en: "create a case" },
+{ de: "einreichen / übermitteln", en: "submitted" },
+{ de: "einreichen / übermitteln", en: "submitted" },
+{ de: "es drohen Schadensersatzansprüche", en: "there are potential claims for damages" },
+{ de: "es drohen Schadensersatzansprüche", en: "there are potential claims for damages" },
+{ de: "es freut mich", en: "i am pleased" },
+{ de: "es ist bedauerlich", en: "It is regrettable" },
+{ de: "es riecht unangenehm", en: "it smells unpleasant" },
+{ de: "Fensterscheibe aus Glas", en: "window screen is made of glass" },
+{ de: "Fensterscheibe aus Glas", en: "window screen is made of glass" },
+{ de: "Fliesen im Badezimmer", en: "tiles in bathroom" },
+{ de: "ich bin Angestellter", en: "employee" },
+{ de: "in der Nähe", en: "nearby" },
+{ de: "in Kalender eintragen", en: "enter in the calendar" },
+{ de: "in Wohnung einziehen", en: "move into the apartment" },
+{ de: "Kaution beträgt 1500€", en: "deposit is 1500€" },
+{ de: "Kündigung der Wohnung", en: "termination of the tenancy" },
+{ de: "sich ausbreiten in", en: "spread throughout" },
+{ de: "sich leisten können", en: "to afford" },
+{ de: "Sind Sie unzufrieden?", en: "are you dissatisfied?" },
+{ de: "Stöpfsel der Badewanne", en: "plug of the bathhub" },
+{ de: "Stöpfsel der Badewanne", en: "plug of the bathhub" },
+{ de: "Vorhang am Fenster", en: "curtain" },
+{ de: "zufrieden und glücklich", en: "satisfied and happy " },
+{ de: "zufrieden und glücklich", en: "satisfied and happy" },
+{ de: "Zufriedenheit der Mieter", en: "tenant satisfaction" },
+{ de: "Zufriedenheit der Mieter", en: "tenant satisfaction" },
+{ de: "aus der Wohnung ausziehen", en: "to move out of the apartment" },
+{ de: "das ist nicht ausreichend", en: "that's not enough" },
+{ de: "der Boden ist schmutzig", en: "the floor is dirty" },
+{ de: "der Boden ist schmutzig", en: "the floor is dirty" },
+{ de: "der Schlauch ist geplatz", en: "the hose burst" },
+{ de: "die Zeit wird knapp", en: "time is running out" },
+{ de: "er wird es reparieren", en: "he will fix it" },
+{ de: "etwas zu schätzen wissen", en: "i appreciate that" },
+{ de: "hält sich in Grenzen", en: "within reasonable limits" },
+{ de: "hier riecht es muffig", en: "it smells musty here" },
+{ de: "ich würde es bevorzugen", en: "i would prefer" },
+{ de: "Im Flur stehen Schuhe", en: "there are shoes in the hallway" },
+{ de: "sich bei Ihnen melden", en: "get back to you" },
+{ de: "sich bei Ihnen melden", en: "get back to you  " },
+{ de: "wir möchten Sie beruhigen", en: "we want to reassure you" },
+{ de: "wir müssen es abschätzen", en: "we have to estimate it" }
+
+
+
+
+    ];
+
+
+
+
+    const phrases = [
+    { de: "aus der Wohnung ausziehen", en: "to move out of the apartment" },
+{ de: "das Bauteil ist reparaturbedürftig", en: "the component is in need of repair" },
+{ de: "das ist nicht ausreichend", en: "that's not enough" },
+{ de: "der Schlauch ist geplatz", en: "the hose burst" },
+{ de: "die Entwässerungsleitungen sind verstopft", en: "the drainage pipes are clogged" },
+{ de: "Die Geschirrspülmaschie funktioniert nicht", en: "the dishwasher maschie does not work" },
+{ de: "die Heizkörper sind untergeordnet", en: "the radiators are subordinate" },
+{ de: "die Warmmiete beträgt 600€", en: "the rent includings bills is 600€" },
+{ de: "Die Waschmaschine ist defekt", en: "the washing machine is broken" },
+{ de: "entgegenkommen (zB auf Kullanz)", en: "accommodated" },
+{ de: "es sind Dachziegel heruntergefallen", en: "roof tiles fell down" },
+{ de: "etwas zu schätzen wissen", en: "i appreciate that" },
+{ de: "ich würde es bevorzugen", en: "i would prefer" },
+{ de: "Many thanks in advance", en: "Vielen Dank im Voraus" },
+{ de: "sich für etwas entschuldigen", en: "to apologize for something" },
+{ de: "sie müssen rechtzeitig bezahlen", en: "you must pay on time" },
+{ de: "Störung in der Haustechnik", en: "fault in the building services" },
+{ de: "unser Büro hat Betriebsurlaub", en: "our office is on holidy break" },
+{ de: "wir möchten Sie beruhigen", en: "we want to reassure you" },
+{ de: "wir müssen es abschätzen", en: "we have to estimate it" },
+{ de: "bitte bestätigen Sie den Termin", en: "please confirm the appointment" },
+{ de: "Bitte überweisen Sie die Miete", en: "please transfer the rent" },
+{ de: "das Duschbecken ist zu klein", en: "the shower basin is too small" },
+{ de: "Das Gerät hat eine Störung", en: "the device has a fault" },
+{ de: "das Waschbecken glänzt wie neu", en: "The sink shines like new" },
+{ de: "der Bürgersteig muss ausgegraben werden", en: "the sidewalk needs to be dug up" },
+{ de: "der Mobilfunkempfang ist sehr schlecht", en: "mobile reception is very poor" },
+{ de: "der Parkettboden muss geölt werden", en: "the parquet floor needs to be oiled" },
+{ de: "der Wasserfleck wird immer größer", en: "the water stain is getting bigger" },
+{ de: "die Badewanne ist sehr verbraucht", en: "the bathtub is very used" },
+{ de: "Die Baustelle ist nun abgeschlossen", en: "the construction site is now completed" },
+{ de: "die Duschwand ist nicht dicht", en: "the shower wall is not tight" },
+{ de: "die Heizkörper werden nur lauwarm", en: "the radiators only get lukewarm" },
+{ de: "Die Küchenschränke an der Wand", en: "the kitchen cabinets on the wall" },
+{ de: "die Kündigungsfirst beträgt drei Monate", en: "the notice period is three months" },
+{ de: "Die Mietkaution ist vollständig bezahlt", en: "the rental deposit is paid in full" },
+{ de: "die Müllabfuhr wird morgen kommen", en: "garbage collection will come tomorrow" },
+{ de: "Die Sockelleisten sind ganz neu", en: "the skirting boards are brand new" },
+{ de: "Die Tapeten an den Wänden", en: "the wallpaper on the walls" },
+{ de: "die Wohnungstür schleift am Boden", en: "the apartment door is scraping against the floor" },
+{ de: "Die Wohnungsübergabe findet heute statt", en: "the handover of the apartment takes place today" },
+{ de: "du bist eine lustige person", en: "you are a funny person" },
+{ de: "haben sie ein schönes Wochenende", en: "have a nice weekende" },
+{ de: "Ich gebe mir größte Mühe", en: "i am doing my very best" },
+{ de: "ich werde einen Vorgang anlegen", en: "i will create a case" },
+{ de: "ich werde es mir überlegen", en: "i will think about it" },
+{ de: "Ihr Stromverbrauch ist sehr hoch", en: "your electricity consumption is very high" },
+{ de: "Ihre Mietminderung ist nicht gerechtfertigt", en: "your rent reduction is not justified" },
+{ de: "Im Hof sind alle Mülltonnen", en: "in the yard are all garbage cans" },
+{ de: "jemanden auf dem Laufenden halten", en: "to keep someone updated " },
+{ de: "Möchten Sie Ihren Mietvertrag kündigen?", en: "would you like to cancel your rental agreement?" },
+{ de: "möglicherweise sind die Abwasserrohre verstopf", en: "possibly the sewage pipes are clogged" },
+{ de: "sie können die Buchhaltung anrufen", en: "you can call the accounting" },
+{ de: "wir haben das Geld erhalten", en: "we have received the money" },
+{ de: "wir haben eine Firma beauftragt", en: "we hired a company" },
+{ de: "Wir möchten jedes Missverständnis vermeiden", en: "we want to avoid any misunderstanding" },
+{ de: "wir müssen die Heizleistung reduzieren", en: "we have to reduce the heating power" },
+{ de: "wir werden eine Aktennotiz erstellen", en: "we will create a memo" },
+{ de: "aktuell haben wir keine freien Wohnungen", en: "we currently have no available apartments" },
+{ de: "bitte lassen Sie uns das klären", en: "please let us clarify this" },
+{ de: "der Hausmeister renigt regelmäßig dast Treppenhaus", en: "the caretaker regularly cleans the stairwell" },
+{ de: "der Schlauch der Waschmaschine ist geplatzt", en: "the washing machine hose has burst" },
+{ de: "der Schließzylinder der Haustür ist defekt", en: "the lock cylinder of the front door is defective" },
+{ de: "der Schreiner wird die Balkontür richten", en: "the carpenter will fix the balcony door" },
+{ de: "Der Stromanbieter wird seine Preise erhöhen", en: "the electricity provider will increase its prices" },
+{ de: "Die Belüftungssiebe im Badezimmer sind verstopft", en: "the ventilation screens in the bathroom are clogged" },
+{ de: "die Decke muss weiß gestrichen werden", en: "the ceiling needs to be painted white" },
+{ de: "Die Fenster sind sehr gut isoliert", en: "the windows are very well insulated" },
+{ de: "Die Heizkosten werden nach Verbrauch abgerechnet", en: "the heating costs are billed based on consumption" },
+{ de: "Die Mieter werden die Wohnungen beziehen", en: "the tenants will move into the apartments" },
+{ de: "die Mietsteigerung hält sich in grenzen", en: "the rent increase is within reasonable limits" },
+{ de: "Die monatlichen Abschläge betragen 50 Dollar", en: "monthly payments are $50" },
+{ de: "die Reparatur hat der Vermieter durchgeführt", en: "the repair was carried out by the landlord" },
+{ de: "Die Sanitärfirma wird Ihre Badewannenarmatur überprüfen", en: "the plumbing company will check your bathtub faucet" },
+{ de: "Die Schimmelproblematik muss umgehend behoben werden", en: "the mold issue needs to be addressed immediately" },
+{ de: "Die Wohnung muss regelmäßig gelüftet werden", en: "the apartment must be aired regularly" },
+{ de: "du bist eine sehr höfliche person", en: "you are a very polite person" },
+{ de: "Einen Termin für die Wohnungsübergabe vereinbaren", en: "make an appointment for handing over the apartment" },
+{ de: "es ist eine Provision zu zahlen", en: "there is a commission to pay" },
+{ de: "Es ist wichtig, sich ständig weiterzuentwickeln", en: "it is important to continuously improve oneself" },
+{ de: "Es muss eine Vorauszahlung geleistet werden", en: "a prepayment must be made" },
+{ de: "heute muss ich einige Aufgaben bearbeiten", en: "today, I need to work on several tasks" },
+{ de: "ich freu mich dich zu sehen", en: "i am glad to see you" },
+{ de: "ich habe alle notwendigen Unterlagen mitgebracht", en: " i’ve brought all the necessary documents with me" },
+{ de: "Ich wünschen Ihnen einen schönen Tag", en: "i wish you a nice day" },
+{ de: "ie Heizungsfirma wird Ihren Heizkörper prüfen", en: "the heating company will check your radiator" },
+{ de: "Ihre Miete ist noch nicht verbucht", en: "your rent has not yet been posted" },
+{ de: "Ihre Versicherung wird alle Versicherungsschäden abdecken", en: "your insurance will cover all insurance claims" },
+{ de: "im Hinterhof gibt es einige Fahrradabstellplätze", en: "in the backyard there are some bicycle parking places" },
+{ de: "Im Keller gibt es einen Wasserschaden", en: "there is water damage in the basement" },
+{ de: "Im Keller hat sich Schimmel ausgebreitet", en: "mold has spread in the basement" },
+{ de: "Jede Woche wird das Treppenhaus gekehrt", en: "The stairwell is swept every week" },
+{ de: "Jedoch Woche wird das Treppenhaus gekehrt", en: "However, the stairwell is swept every week" },
+{ de: "Können Sie sich die Wohnung leisten?", en: "Can you afford the apartment?" },
+{ de: "mir gefällt die Wohnung sehr gut", en: "i like the apartment very much" },
+{ de: "sich stets bemühen, sich zu verbessern", en: "continuously strive to improve" },
+{ de: "sie haben einen sehr zuverlässigen Nachbarn", en: "they have a very reliable neighbor" },
+{ de: "sind Sie mit meinem Vorschlag zufrieden?", en: "are you satisfied with my proposal?" },
+{ de: "vielen Dank für Ihre hilfreiche Unterstüzung", en: "thank you very much for your helpful support" },
+{ de: "Wann können wir die Wohnungsübergabe machen?", en: "when can we schedule the apartment handover?" },
+{ de: "Wie viel Geld haben Sie ausgegeben?", en: "how much money did you spent" },
+{ de: "wir können Ihnen eine Wohnungsgeberbestätigung ausstellen", en: "we can issue you with a landlord's confirmation of residence" },
+{ de: "aktuell haben wir eine Eigentumswohnung im Verkauf", en: "we currently have a condominium for sale" },
+{ de: "Auf der Terrasse wird eine Wasserleitung verlegt", en: "a water pipe is laid on the terrace" },
+{ de: "der Brausekopf der Dusche muss erneuert werden", en: "the shower head of the shower needs to be renewed" },
+{ de: "Der Energieversorger hat die Preise stark angehoben", en: "the energy supplier has significantly increased the prices" },
+{ de: "der Fußboden ist in einem guten Zustand", en: "the floor is in a good condition" },
+{ de: "der Maler wird die Wohnung frisch streichen", en: "the painter will give the apartment a fresh coat of paint" },
+{ de: "Die Einbauküche ist in einem einwandfreien Zustand", en: "the fitted kitchen is in perfect condition" },
+{ de: "Die Freigabe liegt uns noch nicht vor", en: "we do not have the release yet" },
+{ de: "die handwerker haben die arbeiten ordentlich ausgeführt", en: "the craftsmen have carried out the work properly" },
+{ de: "Die Immobilie hat sich zum guten weiterentwickelt", en: "the property has improved significantly" },
+{ de: "Die Rechnung werden wir  Ihnen zuschicken", en: "we will send you the invoice" },
+{ de: "die Spüulung des WCs funktioniert nicht einwandfrei", en: "the toilet flush is not working properly" },
+{ de: "fühlen Sie sich von dem Lärm gestört", en: "do you feel disturbed by the noise" },
+{ de: "ich habe den Hausmeister heute früh angerufen", en: "i called the caretaker this morning" },
+{ de: "Ich habe die Anmeldung für Sie vorgenommen", en: "i did the registration for you" },
+{ de: "ich habe für Sie eine Vorlage vorbereitet", en: "I have prepared a template for you." },
+{ de: "ich Rufe Sie wegen folgendem Grund an", en: "i am calling you for the following reason" },
+{ de: "Seit wann wohnen sie in der Wohnung?", en: "how long have you been living in the apartment?" },
+{ de: "Sie müssen die Kaution im Voraus bezahlen", en: "You must pay the deposit in advance" },
+{ de: "unser Büro befindet sich im ersten Obergeschoss", en: "our office is located on the first floor." },
+{ de: "Werden sie vom Vormieter einige Möbel übernehmen", en: "will you be taking over any furniture from the previous tenant" },
+{ de: "wir benötigen eine Auswerungen, aller regelmäßigen Mietzahlungen", en: "we need an analysis of all regular rental payments" },
+{ de: "wir möchten dass unsere Mieter glücklich sind", en: "we want our tenants to be happy" },
+{ de: "als was sind sie in Ihrer Arbeit beschäftigt?", en: "what is your role in your job?" },
+{ de: "anbei erhalten Sie einen Entwurf des zukünftigen Mietvertrages", en: "attached you will find a draft of the future lease agreement" },
+{ de: "Bitte leite die Informationen an den Mietinteressenten weiter", en: "Please forward the information to the prospective tenant." },
+{ de: "Bitte überweisen Sie das Geld auf unser Konto", en: "please transfer the money to our account" },
+{ de: "Das Abwasser in den Leitungen riecht sehr unangenehm", en: "the sewage in the pipes smells very unpleasant" },
+{ de: "das Treppenhaus wird einmal in der Woche gewischt", en: "the stairwell is mopped once a week" },
+{ de: "Der Eigentmümer wird damit sicherlich nicht einverstanden sein", en: "the owner will certainly not agree with this" },
+{ de: "Der Elektriker verlegt das Kabel durch das Haus", en: "the electrician runs the cable through the house" },
+{ de: "der Sicherungskasten befindet sich im Flur Ihrer Wohnung", en: "the fuse box is located in the hallway of your apartment" },
+{ de: "der zuständige Mitarbeiter ist derzeit nich im Büro", en: "the responsible employee is currently not in the office" },
+{ de: "Die Decke im Wohnzimmer muss weiß gestrichen werden", en: "the ceiling in the living room needs to be painted white" },
+{ de: "die Mieterhöhung beruht sich auf dem aktuellen Mietenspiegel", en: "the rent increase is based on the current rental index" },
+{ de: "Die Mieterselbstauskunft muss vom Mieter noch ausgefüllt werden", en: "the tenant self-disclosure form still needs to be completed by the tenant" },
+{ de: "Die Nebenkostenabrechnung wird regelmäßig einmal im Jahr erstellt", en: "the utility bill is generated once a year" },
+{ de: "Die Unterlagen vom Mietinteressenten sind noch nicht vollständig", en: "the documents from the prospective tenant are not yet complete" },
+{ de: "Die Wohnung wird in einem renovierten Zustand übergeben", en: "the apartment will be handed over in a renovated condition" },
+{ de: "diesen Vorgang habe in heute auf Wiedervorlage gesetzt", en: "i have placed this process on follow-up for today" },
+{ de: "Gestern Abend habe ich dem Handwerker Bescheid gegeben", en: "i let the handyman know last night" },
+{ de: "Haben Sie aktuell eine freie Wohnung zur Vermietung?", en: "do you currently have an available apartment for rent?" },
+{ de: "Haben Sie die Wohnung mit dem Immobilienmarkler angesehen?", en: "have you looked at the apartment with the real estate agent?" },
+{ de: "ich bin dir sehr dankbar für deine Hilfe", en: "i am very grateful for your help" },
+{ de: "ich habe einen Termin für die Wohnungsübergabe reserviert", en: "I have scheduled an appointment for the handover of the apartment" },
+{ de: "ich traue mich nicht,  die treppe hochzugehen", en: "i dare not go up the stairs" },
+{ de: "Ich werde diese Information in unserer Software abspeichern", en: "i will save this information in our software" },
+{ de: "in untenstehender Tabelle können Sie alle Daten entnehmen", en: "you can find all the data in the table below" },
+{ de: "Mieterselbstauskunft aller einziehenden Personen (siehe Anhang): ist beigefügt", en: "tenant self-disclosure of all people moving in (see appendix): is attached" },
+{ de: "Mit dem Wasserhahn kannst du deine Pflanzen bewässern", en: "with the faucet you can water your plants" },
+{ de: "Sind Sie mit dem Zustand Ihrer Wohnung zufrieden?", en: "are you satisfied with the condition of your apartment?" },
+{ de: "uns stehen nur noch wenige Tage zur Verfügung", en: "we only have a few days left available" },
+{ de: "unser Ziel ist es, auf Ihre Bedürfnisse einzugehen", en: "Our goal is to address your needs" },
+{ de: "Wir benötigen Ihre Zustimmung, um die Kaution zurückzuzahlen", en: "we need your approval to refund the deposit" },
+{ de: "Wir fordern Sie auf, den Vertrag zu unterzeichnen", en: "we request that you sign the contract" },
+{ de: "wir vermieten aktuell eine Wohnung in einem Mehrfamilienhaus", en: "we are currently renting out an apartment in a multi-family building" },
+{ de: "wir versprechen ihnen, dass sie zufrieden sein werden", en: "we promise you that you will be satisfied" },
+{ de: "wir werden die Unterlagen der neuen Mietinteressenten prüfen", en: "we will review the documents of the new rental applicants" },
+{ de: "wir werden ihnen einen Kündigungsbestätigung per E-Mail zusenden", en: "we will send you a termination confirmation via email" },
+{ de: "bitte vermeiden Sie die Miete zu spät zu zahlen", en: "please avoid paying the rent late" },
+{ de: "den Antrag können Sie bei der Stadt Nürnberg beantragen", en: "you can apply to the city of nuremberg" },
+{ de: "der Fenstergriff löst sich, deshalb muss er instandgesetzt werden", en: "the window handle is coming loose, so it needs to be repaired" },
+{ de: "Der Gebäudeeigentümer ist damit einverstanden, dass der Mietinteressent einzieht.", en: "the property owner agrees to the tenant's occupancy" },
+{ de: "der Hof wird regelmäßig vom Hausmeister gereinigt und gekehrt", en: "he courtyard is regularly cleaned and swept by the caretaker" },
+{ de: "Die Verteilung der Kosten erfolgt nach einem definierten Verteilerschlüssel", en: "the distribution of costs is done according to a defined allocation key" },
+{ de: "Die Wohnung wurde frisch weiß, hell und strahlend gestrichen", en: "the apartment has been freshly painted in a bright, radiant white" },
+{ de: "einige Sicherung haben ausgelöst, als ich den Wasserkocher anmachte", en: "some fuses were triggered when i turned on the kettle" },
+{ de: "Es wurde zu wenig Geld auf das Konto überwiesen", en: "not enough money was transferred to the account" },
+{ de: "gründliche Überprüfung von Vermögenswerten, Verträgen, finanziellen oder rechtlichen Aspekten", en: "due diligence" },
+{ de: "ich habe eine drei Jährige Ausbildung zum Industriekaufmann gemacht", en: "i completed a three-year apprenticeship as an industrial clerk" },
+{ de: "Ich hoffe,  Sie sind zufrieden mit unseren Leistungen", en: "i hope you are satisfied with our services" },
+{ de: "Ich kann Ihnen einen Termin um 12 Uhr anbieten", en: "i can offer you an appointment at 12 o'clock" },
+{ de: "im Treppenhaus dürfen keine Schuhe oder andere Gegenstände stehen", en: "no shoes or other items are allowed to be placed in the stairwell" },
+{ de: "in der Wohnung wurden Wasserflecken und erhöhte Feuchtigkeit festgestellt", en: "water stains and increased humidity have been detected in the apartment" },
+{ de: "Mein Name ist Oliver Acker von Sauer Immobilien GmbH", en: "my name is oliver acker from sauer immobilien gmbh" },
+{ de: "Sie haben eine zweistöckige Wohnung mit einer Wendeltreppe, richtig?", en: "you have a two-story apartment with a spiral staircase, correct?" },
+{ de: "Was passiert, wenn das Problem nicht rechtzeitig gelöst wird?", en: "what happens if the issue isn't resolved in a timely manner?" },
+{ de: "Wir benötigen die vollständigen Unterlagen, um den Mietvertrag abzuschließen", en: "we need the complete documents in order to finalize the rental contract" },
+{ de: "Wir geben unser bestes, damit wir es rechtzeitig schaffen", en: "We are doing our best to make sure we get it done on time" },
+{ de: "wir haben einen neuen Azubi, der uns tatkräftig unterstützt", en: "we have a new trainee who is actively supporting us" },
+{ de: "Wir möchten Sie beruhigen, dass alles in Ordnung ist", en: "we want to reassure you that everything is fine" },
+{ de: "wir sind froh, dass wir so angenehme Mieter haben", en: "we are glad that we have such pleasant tenants" },
+{ de: "wir warten leider noch auf die Freigabe des Eigentümers", en: "unfortunately, we are still waiting for the owner's approval" },
+{ de: "zum heutigen Tag konnte ich noch keinen Zahlungseingang feststellen", en: "to this day i have not been able to determine any payment receipt" },
+{ de: "auf den gängigen Internetportalen haben wir unsere freien Mietwohnungen inseriert", en: "we have listed our available rental apartments on the common online platforms" },
+{ de: "Danke Oliver,  ich weiß deine Hilfe wirklich zu schätzen", en: "thank you oliver i really appreciate your help" },
+{ de: "Das Dokument bezüglich der Schufa Auskunft muss noch besorgt werden", en: "the document regarding the schufa credit report still needs to be obtained" },
+{ de: "Das Guthaben aus der Nebenkostenabrechnung werden wir Ihnen bald ausbezahlen", en: "we will pay out the credit from the utility bill reconciliation to you soon" },
+{ de: "der Untermieter hat nicht die gleichen Rechte aus dem Mietvertrag", en: "the subtenant does not have the same rights under the rental agreement" },
+{ de: "Die Tauben sitzen auf dem Dach,  neben der Dachrinne", en: "the doves sit on the roof, next to the gutter" },
+{ de: "es ist bemerkenswert, wie sie sich um Ihre Wohnung kümmern", en: "it is remarkable how you take care of your apartment" },
+{ de: "es ist schwer einzuschätzen,  ob diese Aussage richtig ist", en: "it is difficult to judge whether this statement is correct" },
+{ de: "es ist wirklich schade, dass sie aus der Wohnung ausziehen", en: "it’s really a pity that you are moving out of the apartment" },
+{ de: "es tut mir leid, dass es zu Missverständnissen gekommen ist", en: "I am sorry that there have been misunderstandings" },
+{ de: "es wird ein Handwerker benötigt,  der die Mängel behebt", en: "a craftsman is needed to fix the defects" },
+{ de: "ich bin nicht darüber erfreut,  dass das geschehen ist", en: "i am not pleased that this has happened" },
+{ de: "ich möchte mit Ihnen einen Termin bezüglich einer Wohnungsübergabe vereinbaren", en: "i would like to make an appointment with you to hand over the apartment" },
+{ de: "im Dachgeschoss ist es sehr warm aufgrund der geringen Isolierung", en: "it is very warm in the attic due to the lack of insulation" },
+{ de: "In Ihrem Wohnraummietvertrag ist ein Kündigungsausschluss von 2 Jahren genannt", en: "your residential lease agreement includes a two-year waiver of termination rights" },
+{ de: "Vielleicht ist es besser,  dass wir den Schaden beheben", en: "maybe it is better that we repair the damage" },
+{ de: "wenn uns die Dokumente vollständig vorliegen, können wir weiteres veranlassen", en: "when we have received the documents in full, we can proceed with further steps" },
+{ de: "Wie schnell können Wartungsprobleme behoben werden, wenn ich sie melde?", en: "how soon can maintenance issues be addressed once i report them" },
+{ de: "Wir bitten Sie, sich an die vereinbarten Hausregeln zu halten", en: "we kindly ask you to adhere to the agreed house rules" },
+{ de: "Wir freuen uns sehr, dass sie unser neuer Mieter werden", en: "we are very pleased that you are becoming our new tenant" },
+{ de: "Wir möchten Sie beruhigen, dass die Reparatur bald abgeschlossen ist", en: "we would like to put your mind at ease that the repair will be completed soon" },
+{ de: "Wir möchten Sie beruhigen, dass keine zusätzlichen Kosten entstehen werden", en: "we want to calm your concerns that no additional costs will arise" },
+{ de: "wir werden Sie darüber informieren, sobald uns alle Informationen vorliegen", en: "we will inform you as soon as we have all the information" },
+{ de: "das Glasfaser wird bald verlegt und dadurch haben sie schnelles Internet", en: "the fiber optic cables will be laid soon, and as a result, you will have fast internet" },
+{ de: "Der Handwerker wird sich so früh wie möglich bei Ihnen melden", en: "the craftsman will contact you as soon as possible" },
+{ de: "Der Mietvertrag wird für einen Zeitraum von mindestens einem Jahr abgeschlossen", en: "the rental agreement is concluded for a minimum period of one year" },
+{ de: "Die Abwasserleitungen werden verblendet,  damit diese nicht mehr sichtbar ist", en: "the sewage pipes are blinded so that it is no longer visible" },
+{ de: "Die Heizkosten sind durchschnittlich und es sind keine Auffälligkeiten zu erkennen", en: "the heating costs are average, and no irregularities have been identified" },
+{ de: "Die Wohnung entspricht den vereinbarten Standards und ist bereit zur Vermietung", en: "the apartment meets the agreed standards and is ready for rent" },
+{ de: "gerne möchten wir mit ihnen einen Termin bezüglich der Wohnungsabnahme vereinbaren", en: "we would like to schedule an appointment with you regarding the apartment handover" },
+{ de: "ich bin Ihnen sehr dankbar, dass sie sich darum gekümmert haben", en: "i am very grateful that you took care of this" },
+{ de: "Ich schlage vor,  dass ich nächste Woche zu Ihnen komme", en: "i suggest that i come to you next week" },
+{ de: "im Mietvertrag ist eine Hausordnung beinhaltet, die die Ruhezeiten klar regelt", en: "the rental agreement contains house rules that clearly regulate quiet hours" },
+{ de: "in der heutigen Zeit muss man sparsam mit dem Stromverbrauch sein", en: "in this day and age you have to be economical with electricity consumption" },
+{ de: "Sie ist aktuell am Telefon und kann Ihre Fragen nicht beantworten", en: "she is currently on the phone and cannot answer your questions" },
+{ de: "sie können den Energieverbrauch beeinflussen,  in dem sie sparsam sind", en: "they can influence the energy consumption in which they are economical" },
+{ de: "werden Sie die Wohnung leer räumen, bevor sie die Schlüssel zurückgeben?", en: "will you clear out the apartment before returning the keys" },
+{ de: "Wir haben die notwendigen Schritte eingeleitet, um das Problem zu beheben", en: "we have initiated the necessary steps to resolve the issue" },
+{ de: "wir haben einen Auszubildenden, der sich um den Vorgang kümmern wird", en: "we have an apprentice who will take care of the process" },
+{ de: "Bezüglich der aktuellen Bankdaten werden wir diese in den nächsten Tagen nachreichen", en: "regarding the current bank details, we will provide them in the coming days" },
+{ de: "Bitte beachten Sie, dass der Mietvertrag nur mit beidseitiger Unterschrift gültig ist", en: "please note that the rental agreement is only valid with both parties' signatures" },
+{ de: "Damit es zu keinen Missverständnissen kommt, fasse ich das Thema nochmal zusammen", en: "to avoid any misunderstandings, i will summarize the topic once again" },
+{ de: "der Nachmieter gibt sich damit bereit, die Möbel von Ihnen zu übernehmen", en: "the new tenant agrees to take over the furniture from you" },
+{ de: "Die Kosten für den Stellplatz sind separat in einem separaten Mietvertrag geregelt", en: "the costs for the parking space are separately outlined in a separate lease agreement" },
+{ de: "die Lüftung muss gewartet werden, damit sie auch in Zukunft einwandfrei funktioniert", en: "the ventilation system needs to be serviced to ensure it works properly in the future" },
+{ de: "Die Wasserleitung wird noch verblendet,  damit diese nicht mehr sichtbar ist", en: "the water pipe is still veneered so that it is no longer visible" },
+{ de: "es ist schaden, dass sie der Vermieter nicht als Mieter ausgesucht hat", en: "it is a pity that the property owner did not choose you as the tenant" },
+{ de: "Haben Sie mit Ihrem Vormieter vereinbart, dass er alle Möbel übernehmen wird?", en: "Did you agree with your previous tenant that they would take over all the furniture" },
+{ de: "Ich erwähnte,  dass der Schlüssel nur von uns nachgemacht werden kann", en: "i mentioned that the key can be imitated only by us" },
+{ de: "ich kann sie schlecht verstehen,  da der Handyempfang sehr schlecht ist", en: "i can hardly understand her because the cell phone reception is very bad" },
+{ de: "man darf einen Mieter nicht dazu überreden, die Leistung der Heizung herunterzufahren", en: "one is not allowed to convince a tenant to turn down the heating performance" },
+{ de: "Time is running out, as there are only a few weeks left", en: "die zeit wird knapp, da es nur noch wenige wochen sind" },
+{ de: "wenn das Fenster gekippt ist, kann nur wenig Luftzirkulation im Raum stattfinden", en: "when the window is tilted, only limited air circulation can occur in the room" },
+{ de: "Wenn die Wände nicht mehr sauber sind, müssen diese frisch gestrichen werden", en: "if the walls are no longer clean, they need to be repainted" },
+{ de: "Wir fordern Sie auf, die Zahlung bis Ende der Woche zu leisten", en: "we urge you to make the payment by the end of the week" },
+{ de: "wir werden 20% der Kaution einbehalten, bis die endgültige Betriebskostenabrechnung erstellt wurde", en: "We will retain 20% of the security deposit until the final utility bill has been issued" },
+{ de: "17 Uhr ist leider zu spät, da unser Büro zu dieser Uhrzeit schließt", en: "unfortunately, 5 pm is too late, as our office closes at that time" },
+{ de: "alle Steckdosen in der Wohnung funktionieren leider nicht, da die Sicherungen herausgeflogen sind", en: "unfortunately, none of the sockets in the apartment are working because the fuses have blown" },
+{ de: "bitte senden Sie mir die Schilderung per E-Mail, damit ich weiteres veranlassen kann", en: "please send me the description via email so that i can take further action" },
+{ de: "Bitte teilen Sie uns Ihr Anliegen schriftlich per Post oder per E-Mail mit", en: "please send us your request in writing, either by post or by email" },
+{ de: "der Gewerbemieter hat einen besonderen Mietvertrag, da es sich um ein Büro handelt", en: "the commercial tenant has a special lease agreement because it is an office space" },
+{ de: "Der Mieter hat das Recht auf eine ordnungsgemäße Abnahme der Wohnung bei Auszug", en: "the tenant has the right to a proper handover of the apartment upon moving out" },
+{ de: "der Mietvertrag läuft auf unbestimmte zeit und geht somit länger als ein Jahr", en: "the rental agreement runs for an indefinite period and is therefore longer than one year" },
+{ de: "Die Unterlagen müssen uns vollständig vorliegen, erst dann können wir einen Termin vereinbaren", en: "the documents must be complete and submitted to us, only then can we schedule an appointment" },
+{ de: "die Wahrscheinlichkeit ist gering, dass wir auf so kurze Zeit einen Nachmieter finden", en: "the likelihood of finding a new tenant on such short notice is low" },
+{ de: "Die Wohnungsübergabe müssen wir früher durchführen, da zum Jahreswechsel unser Büro geschlossen ist", en: "we need to carry out the apartment handover earlier, as our office will be closed over the new year" },
+{ de: "es handelt sich um einen gemauerten Altbau Dementsprechend ist hier der Heizbedarf höhrer", en: "it is a brick-built old building accordingly, the heating demand is higher" },
+{ de: "es könnte möglich sein,  dass nächster Woche der Vermieter nach Nürnberg kommt", en: "it could be possible that next week the landlord comes to nuremberg" },
+{ de: "Haben Sie am 02122024 um 17:00 Uhr ebenfalls Zeit, an der Wohnungsübergabe teilzunehmen?", en: "do you also have time to attend the apartment handover on december 2, 2024, at 5:00 pm?" },
+{ de: "Haben Sie die Kaution und die erste Miete bereits auf unser Konto überwiesen", en: "have you already transferred the deposit and the first rent to our account?" },
+{ de: "Ich möchte Sie davon überzeugen,  dass Sie die richtige Wahl getroffen haben", en: "i would like to convince you that you have made the right choice" },
+{ de: "In der Kostenaufstellung sehen sie alle Positionen, die für die Abrechnung relevant sind", en: "in the cost breakdown, you can see all the items that are relevant for the billing" },
+{ de: "Sie müssen Gelduldig sein,  da der Handwerker auf einer anderen Baustelle ist", en: "you have to be patient because the craftsman is on another construction site" },
+{ de: "unter anderem kümmern wir uns ebenfalls um Renovierungen, die in der Wohnung anfallen", en: "among other things, we also take care of renovations that are needed in the apartment" },
+{ de: "wir kümmern uns um große Sanierungsmaßnahmen wie zum Beispiel die Neugestaltung von Wohnungen", en: "we take care of major renovation projects, such as the refurbishment of apartments" },
+{ de: "wir werden einen Heizungsfachmann beauftragen, der die Heizungsstörung so schnell wie möglich behebt", en: "we will hire a heating specialist to fix the heating issue as soon as possible" },
+{ de: "wird der Nachmieter einige Ihrer Möbel und Einrichtungsgegenstände übernehmen und an sie ablösen?", en: "will the new tenant take over some of your furniture and furnishings and compensate you for them?" },
+{ de: "Bitte setzen Sie sich in Kontakt mit mir,  um einen Termin zu vereinbaren", en: "please contact me to arrange an appointment" },
+{ de: "der Kamin ist verdreckt und muss instandgesetzt werden, da er zudem einige Beschädigungen aufweist", en: "the chimney is dirty and needs to be repaired, as it also has some damages" },
+{ de: "der Mieter entspricht nicht den Vorstellungen des Vermieters, da der Mieter nicht geeignet ist", en: "The tenant does not meet the landlord's expectations because the tenant is not suitable" },
+{ de: "Die Abrechnung aus dem vorletzten Jahr liegt uns vor und wir werden diese vergleiche", en: "the billing from the year before last is available, and we will compare it" },
+{ de: "es ist nicht einfach und mit erheblichen Zeitaufwand verbunden, einen passenden Nachmieter zu finden", en: "it is not easy and involves considerable time and effort to find a suitable new tenant" },
+{ de: "ich halte sie auf dem Laufenden, sobald ich vom Immobilieneigentümer eine Rückmeldung erhalten habe", en: "i will keep you updated as soon as i receive feedback from the property owner" },
+{ de: "Lassen Sie es mich wissen, wenn Sie mit den Leistungen unseres Hausmeisters zufrieden sind", en: "please let me know if you are satisfied with the services of our caretaker" },
+{ de: "mein englisches Vokabular ist noch nicht ausreichen, um fließend die englische Sprache zu sprechen", en: "my english vocabulary is not yet sufficient to speak the language fluently" },
+{ de: "Sie müssen die Wohnung in dem Zustand zurückgeben, so wie sie sie übernommen haben", en: "ou must return the apartment in the same condition as you received it" },
+{ de: "Wenn Ihr monatliche Einkommen nicht ausreicht müssen Sie eine Bürgschaft einer zahlungskräftigen Person vorlegen", en: "if your monthly income is not sufficient, you will need to provide a guarantor from a financially capable person" },
+{ de: "Wenn Sie Fragen zu Ihrer Abrechnung haben, können Sie sich gerne an uns wenden", en: "if you have any questions regarding your billing, feel free to contact us" },
+{ de: "wenn Sie ihre Miete nicht bezahlen kann dies zu einer Kündigung des Mietvertrags führen", en: "if you do not pay your rent, this may lead to the termination of the rental agreement" },
+{ de: "werden Sie die Möbel und Einrichtungsgegenstände mitnehmen oder überlassen sie diese an Ihren Nachmieter?", en: "will you take the furniture and furnishings with you, or leave them for your successor tenant?" },
+{ de: "wir freuen uns sehr, wenn Sie uns eine gute Bewertung in Google geben könnten", en: "we would be very happy if you could leave us a good review on google" },
+{ de: "der Gebäudeeigentümer wird die Kaution ausbezahlen, sobald die Nebenkostenabrechnung für das Jahr 204 abgeschlossen ist", en: "the property owner will release the deposit once the utility bill reconciliation for the year 2024 is completed" },
+{ de: "der Gesetzgeber verlangt, dass jeder Mieter seine Verbräuche bezüglich Wärme- und Warmwasserverbrauch monatlich einsehen kann", en: "he legislator requires that every tenant must be able to view their heating and hot water consumption on a monthly basis" },
+{ de: "es ist bedauerlich, jedoch werden wir unser bestes geben, damit alles in Ordnung gebracht wird", en: "It is regrettable, but we will do our best to make everything right" },
+{ de: "nein, aktuell haben wir keine Wohnungen in der Vermietung Aktuell bieten wir nur Gewerbeflächen an", en: "no, currently we do not have any apartments available for rent at the moment, we are only offering commercial spaces" },
+{ de: "Wann möchen Sie aus der Wohnung ziehen und wann können wir mit Ihrer Kündigung rechnen?", en: "when would you like to move out of the apartment, and when can we expect your termination notice?" },
+{ de: "wir haben bereits einen Schädlingsbekämpfer beauftragt, damit er alle Ratten, Mäuse, Tauben und Küchenschaben vertreibt", en: "we have already hired a exterminatorl specialist to eliminate all rats, mice, pigeons, and cockroaches" },
+{ de: "es handelt sich um einen Schlüssel aus einer Schließanlage Diese dürfen nur wir als Hausverwaltung bestellen", en: "this is a key from a master key system these may only be ordered by us as the property management" },
+{ de: "ich verstehe nun nicht, wo das Problem liegt. Wie kann ich hier ihnen am besten helfen?", en: "I don't understand where the problem lies now. How can I best assist you here?" },
+{ de: "ist es richtig, dass sie bereits früher ausziehen möchten, damit der Nachmieter die Wohnung übernehmen kann?", en: "is it correct that you would like to move out earlier so that the new tenant can take over the apartment?" },
+{ de: "wir halten Ausschau und sobald wir neues und näheres Wissen, kommen wir erneut auf Sie zu", en: "we are keeping an eye out, and as soon as we know more, we will get back to you" },
+{ de: "Bitte vereinbaren Sie mit uns einen Termin, um den Mietvertrag in unserem Büro (Königstr ) zu unterzeichnen", en: "please arrange an appointment with us to sign the lease agreement at our office (königstr)" },
+{ de: "die Wohnung ist für Sie reserviert. Somit sollten sie sich zeitnah entscheiden, ob Ihnen dike Wohnung gefällt", en: "the apartment is reserved for you. Therefore, you should decide promptly whether you like it" },
+{ de: "Gerne können Sie einen Mietinteressenten vorschlagen Anschließend besteht die Möglichkeit, dass Sie früher aus dem Vertrag herauskommen", en: "ou are welcome to suggest a prospective tenant afterwards, there is the possibility that you can exit the contract earlier" },
+{ de: "Sie Wohnung gilt als leer übergeben Somit befinden sich keine Möbel oder sonstige Gegenstände in der Wohung", en: "your apartment is considered to have been handed over empty thus, no furniture or other items are left in the apartment" },
+{ de: "Wie gehe ich vor, wenn ich nach meinem Einzug Probleme mit der Instandhaltung der Wohnung melden möchte?", en: "how do i go about reporting any maintenance issues or problems in the apartment once i move in?" },
+{ de: "bitte beachten Sie, dass wir die Schlüssel erst übergeben, sobald die volle Kautionshöhe auf unserem Konto eingegangen ist", en: "please note that we will only hand over the keys once the full deposit amount has been received in our account" },
+{ de: "bitte schauen sie auf den bekannten Internetportalen, nach freien Wohnungen, denn auch dort sind alle unsere Wohnunge gelistet", en: "please check the well-known online portals for available apartments, as all of our apartments are listed there as well" },
+{ de: "das Streichen der Wände darf jedoch nicht nur partiell erfolgen, sondern muss von Kante bis Kante durchgeführt werden", en: "however, the painting of the walls must not be done partially, but must be carried out from edge to edge" },
+{ de: "hinter dem Schrank hat sich im Wohnungsflur schimmel gebildet Die Sporen ahebn sich in der ganzen Wohnung ausgebreitet", en: "mold has formed behind the wardrobe in the hallway of the apartment the spores have spread throughout the entire apartment" },
+{ de: "wenn in Ihrer Küche das Spülbecken verstopft ist, müssen wir die Abwasserleitungen reinigen lassen, da diese verstopft sind", en: "if the sink in your kitchen is clogged, we will need to have the drainage pipes cleaned, as they are blocked" },
+{ de: "Der neue Mieter wird vom Altmieter viele Möbell übernehmen Dementsprechend müssen Sie mit dem Vormieter intern eine Vereinbarung treffen", en: "the new tenant will take over many pieces of furniture from the old tenant therefore, you need to make an internal agreement with the previous tenant" },
+{ de: "gern ekönnen sie mich morgen nochmal anrufen, damit ich einen Vorgang anlegen kann, sofern der Mängel noch bestehen sollte", en: "you are welcome to call me again tomorrow so that i can create a case, provided the issue still exists" },
+{ de: "um den zeitlichen Stress zu vermeiden können wir Ihnen emfpehlen, den Umzug der Wohnung auf ein Wochenende zu verschieben", en: "to avoid time-related stress, we recommend postponing the apartment move to a weekend" },
+{ de: "Sobald der Mietvertrag unterzeichnet und die Kaution überwiesen wurde, können wir die Schlüssel aushändigen und Frau Ritorto eine Kündigungsbestätigung zusenden", en: "once the lease agreement has been signed and the deposit has been transferred, we can hand over the keys and send mrs ritorto a termination confirmation" },
+{ de: "Ihre Kündigungsfrist beträgt 3 Monate Ihre Kündigung muss spätestens am dritten Werktag des Monatasbeginns bei uns per Post und orginalunterschrift eingetroffen sind", en: "your notice period is 3 months your termination must reach us by post with an original signature by the third working day of the month" },
+{ de: "leider müssen wir Ihnen mitteilen, dass sich der Gebäudeeigentümer gegen die Mietinteressentin entschieden hat. Wir dürfen Sie bitten, einen neuen Mietinteressenten vorzuschlagen", en: "unfortunately, we must inform you that the property owner has decided against the prospective tenant. We kindly ask you to suggest a new prospective tenant" },
+{ de: "bitte ins englische Übersetzen. Wir werden einen Teil der Kaution einbehalten. Nach erstellung der letzten Nebenkostenabrechnung wird der Sicherheitseinbehalt mit der Nebenkostenabrechnung verrechnet", en: "We will retain a part of the deposit. After the final utility bill is prepared, the security retention will be offset against the utility bill" },
+{ de: "wir versuchen uns stets zu verbessern, damit wir alle aufträge schneller abwickeln können Somit ist auch auf lange Sicht der Mieter zufrieden und glücklich", en: "we continuously strive to improve so that we can handle all tasks more quickly this way, tenants will be satisfied and happy in the long run" },
+{ de: "Sie glauben, dass ihre Wohnung zu Hohe Nebenkosten haben? Dann schreiben sie uns eine E-Mail, da wir Einsprüche beezüglich der Nebenkostenabrechnung nur schriftlich entgegennehmen dürfen", en: "do you believe your apartment has high additional costs? then please send us an email, as we can only accept objections regarding the utility bill in writing" },
+{ de: "wann haben Sie Zeit, um eine Wohnungsabnahme durchführen zu können Bitte beachten Sie , dass wir vom 20 Dezember bis 06 Januar im Urlaub sind", en: "when would you be available for an apartment inspection? please note that we will be on holiday from december 20th to january 6th" },
+{ de: "vielen Dank für Ihre E-Mail und für Ihre Unterlagen Diese habe ich zur Prüfung intern weitergeleitet Sobald wir Rückmeldung erhalten haben, melden wir uns bei Ihnen", en: "thank you for your email and your documents i have forwarded them internally for review we will get back to you as soon as we receive feedback" },
+{ de: "bitte ins englisch eübersetzen: Bitte beachten Sie, dass wir die Schlüssel erst ausgeben können, sofern der Mietvertrag unterzeichnet wurde UND die volle Kaution auf das Konto des Gebäudeeigentümers eingegangen ist", en: "please note that we can only hand over the keys once the rental agreement has been signed and the full security deposit has been received in the property owner's account" },
+{ de: "Hallo Frau Müller, wir möchten Ihnen mitteilen, dass wir die Freigabe vom Eigentümer erhalten haben Zu welches Tag (Datum) soll der Mietvertrag beginnen und wann möchten Sie die Wohnungsübergabe durchführen?", en: "hello mrs müller, we would like to inform you that we have received approval from the property owner on which date should the lease start, and when would you like to arrange the apartment handover?" },
+{ de: "Gehaltsabrechnungen der letzten drei Monate der potenziellen Mieter: Meine erste Gehaltsabrechnung in Deutschland sollte Ende nächster Woche verfügbar sein, und ich werde sie dem Prozess hinzufügen In der Zwischenzeit habe ich meinen Vertrag beigefügt, in dem Sie mein Bruttogehalt sehen können und dass mein Vertrag unbefristet ist", en: "salary statements from the last three months of the prospective tenants: my first payslip in germany should be available at the end of next week and i will add it to the process but in the meantime i have attached my contract, where you can see my gross salary and that my contract is open-ended" }
+
+    ];
+
+    let currentDirection = "de-en";
+    let currentIndex = -1;
+    let hintShown = false;
+    let fullyShown = false;
+    let currentMode = "vocabulary";
+
+    const questionEl = document.getElementById("question");
+    const answerEl = document.getElementById("answer");
+    const directionEl = document.getElementById("direction");
+    const modeEl = document.getElementById("mode");
+    const toggleHintBtn = document.getElementById("toggle-hint");
+    const nextWordBtn = document.getElementById("next-word");
+    const showAllBtn = document.getElementById("show-all");
+    const wordListEl = document.getElementById("word-list");
+    const userInput = document.getElementById("user-input");
+    const feedbackEl = document.getElementById("feedback");
+
+    function updateDirection() {
+      currentDirection = directionEl.value;
+    }
+
+    function updateMode() {
+      currentMode = modeEl.value;
+      getRandomWord();
+    }
+
+    function getRandomWord() {
+      let currentData = currentMode === "vocabulary" ? vocabulary : phrases;
+      currentIndex = Math.floor(Math.random() * currentData.length);
+      hintShown = false;
+      fullyShown = false;
+      displayWord();
+      clearInput();
+      feedbackEl.textContent = '';
+    }
+
+    function displayWord() {
+      let currentData = currentMode === "vocabulary" ? vocabulary : phrases;
+      const word = currentData[currentIndex];
+      questionEl.textContent =
+        currentDirection === "de-en" ? word.de : word.en;
+      answerEl.textContent = ".";
+      answerEl.classList.add("blurred");
+    }
+
+    function toggleHint() {
+      let currentData = currentMode === "vocabulary" ? vocabulary : phrases;
+      const word = currentData[currentIndex];
+      if (!hintShown) {
+        answerEl.textContent =
+          currentDirection === "de-en" ? word.en : word.de;
+        answerEl.classList.add("blurred");
+        hintShown = true;
+      } else if (!fullyShown) {
+        answerEl.classList.remove("blurred");
+        fullyShown = true;
+      } else {
+        answerEl.textContent = ".";
+        answerEl.classList.add("blurred");
+        hintShown = false;
+        fullyShown = false;
+      }
+    }
+
+    function showAllWords() {
+  let currentData = currentMode === "vocabulary" ? vocabulary : phrases;
+  
+  // Die Liste der Wörter als HTML erzeugen
+  wordListEl.innerHTML = currentData
+    .map(
+      (word) => `
+        <div class="vocab-item">
+          <span onclick="toggleSharp(this)" class="sharp">${word.de}</span>
+          <span class="arrow">↔</span>
+          <span onclick="toggleSharp(this)" class="sharp">${word.en}</span>
+        </div>`
+    )
+    .join("");
+  
+  // Die Wortliste sichtbar machen
+  wordListEl.classList.toggle("open");
+}
+
+
+    function toggleSharp(element) {
+      element.classList.toggle("shown");
+    }
+
+// Initialer Text für feedbackEl, damit es beim Start nicht verschiebt
+feedbackEl.textContent = " ";  // Füge ein unsichtbares Zeichen hinzu
+feedbackEl.style.opacity = 0;  // Anfangs unsichtbar
+
+function checkAnswer() {
+  let currentData = currentMode === "vocabulary" ? vocabulary : phrases;
+  const word = currentData[currentIndex];
+  const correctAnswer = currentDirection === "de-en" ? word.en : word.de;
+  const userAnswer = userInput.value.trim().toLowerCase();
+
+  // Setzt Opazität auf 1, damit das Feedback sichtbar wird
+  feedbackEl.style.opacity = 1;
+
+  if (userAnswer === correctAnswer.toLowerCase()) {
+    feedbackEl.textContent = "Richtig!";
+    feedbackEl.classList.remove("incorrect");
+    feedbackEl.classList.add("correct");
+  } else {
+    feedbackEl.textContent = "Falsch. Versuche es noch einmal!";
+    feedbackEl.classList.remove("correct");
+    feedbackEl.classList.add("incorrect");
+  }
+}
+
+
+
+    function clearInput() {
+      userInput.value = '';
+    }
+
+    // Event Listeners
+    directionEl.addEventListener("change", updateDirection);
+    modeEl.addEventListener("change", updateMode);
+    toggleHintBtn.addEventListener("click", toggleHint);
+    nextWordBtn.addEventListener("click", getRandomWord);
+    showAllBtn.addEventListener("click", showAllWords);
+    userInput.addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        checkAnswer();
+      }
+    });
+
+    getRandomWord();
+
+
+
+
+
+
+    
+// Event-Listener für den Such-Button
+document.getElementById("search-btn").addEventListener("click", function() {
+  const searchTerm = document.getElementById("search-input").value.trim().toLowerCase();
+  if (searchTerm) {
+    searchWord(searchTerm);
+  }
+});
+
+
+
+
+function searchWord(term) {
+  // Normalisiere den Suchbegriff (Kleinschreibung für Vergleich)
+  const normalizedTerm = term.toLowerCase();
+
+  // Zusammenführen der beiden Arrays
+  const combinedData = [...vocabulary, ...phrases];
+
+  // Filtere aus beiden Arrays basierend auf dem Suchbegriff
+  const foundWords = combinedData.filter((entry) => {
+    // Prüfen, ob die deutsche oder englische Übersetzung den Suchbegriff enthält
+    return (
+      (entry.de && entry.de.toLowerCase().includes(normalizedTerm)) || 
+      (entry.en && entry.en.toLowerCase().includes(normalizedTerm))
+    );
+  });
+
+  // Zeige die gefundenen Ergebnisse an (oder ein leeres Array, wenn nichts gefunden wurde)
+  showSearchResults(foundWords);
+}
+
+
+
+
+
+// Funktion, um die Suchergebnisse im Modal anzuzeigen
+function showSearchResults(foundWords) {
+  const resultsContainer = document.getElementById("search-results");
+  resultsContainer.innerHTML = ''; // Vorherige Ergebnisse löschen
+
+  if (foundWords.length > 0) {
+    const results = foundWords
+      .map((word) => `<p>${word.de} ↔ ${word.en}</p>`)
+      .join("");
+    resultsContainer.innerHTML = results;
+  } else {
+    resultsContainer.innerHTML = '<p>Kein passendes Wort gefunden.</p>';
+  }
+
+  // Modal anzeigen mit sanfter Animation
+  const modal = document.getElementById("search-modal");
+  modal.style.display = "block";
+  modal.style.animation = "fadeIn 0.5s ease"; // Animation für das Öffnen
+}
+
+// Event-Listener für das Schließen des Modals
+document.querySelector(".close-btn").addEventListener("click", function() {
+  const modal = document.getElementById("search-modal");
+  modal.style.animation = "fadeOut 0.5s ease"; // Animation für das Schließen
+  setTimeout(function() {
+    modal.style.display = "none"; // Modal nach der Animation ausblenden
+  }, 500); // Wartezeit entspricht der Dauer der Animation
+});
+
+// Wenn der Benutzer außerhalb des Modals klickt, wird es auch geschlossen
+window.onclick = function(event) {
+  const modal = document.getElementById("search-modal");
+  if (event.target === modal) {
+    modal.style.animation = "fadeOut 0.5s ease"; // Animation für das Schließen
+    setTimeout(function() {
+      modal.style.display = "none"; // Modal nach der Animation ausblenden
+    }, 500);
+  }
+}
+
+
+
+
+
+
+// Funktion zum Hinzufügen neuer Vokabeln
+document.getElementById("add-word-btn").addEventListener("click", function() {
+  const newDe = document.getElementById("new-de").value.trim();
+  const newEn = document.getElementById("new-en").value.trim();
+
+  if (newDe && newEn) {
+    vocabulary.push({ de: newDe, en: newEn });
+    alert("Neue Vokabel hinzugefügt: " + newDe + " ↔ " + newEn);
+    document.getElementById("new-de").value = '';
+    document.getElementById("new-en").value = '';
+    showAllWords(); // Aktualisiere die Anzeige
+  } else {
+    alert("Bitte beide Felder ausfüllen!");
+  }
+});
+
+// Funktion zum Speichern der Änderungen
+document.getElementById("save-btn").addEventListener("click", function() {
+  const htmlContent = document.documentElement.outerHTML;
+  const blob = new Blob([htmlContent], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const now = new Date();
+const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+a.download = `vokabeltrainer_${timestamp}.html`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+
+
+
+
+
+document.getElementById("save-html-btn").addEventListener("click", function() {
+  const htmlContent = document.body.innerHTML;
+  localStorage.setItem("savedHTML", htmlContent);
+  alert("Das HTML wurde erfolgreich gespeichert!");
+});
+
+
+window.onload = function() {
+  const savedHTML = localStorage.getItem("savedHTML");
+  if (savedHTML) {
+    const restore = confirm("Möchten Sie die gespeicherte Version der Seite laden?");
+    if (restore) {
+      document.body.innerHTML = savedHTML;
+      // Events müssen neu zugewiesen werden
+      reinitializeEvents();
+    }
+  } else {
+    loadFromLocalStorage();
+    getRandomWord();
+  }
+};
+
+function reinitializeEvents() {
+  document.getElementById("add-word-btn").addEventListener("click", function() {
+    const newWordDe = document.getElementById("new-word-de").value.trim();
+    const newWordEn = document.getElementById("new-word-en").value.trim();
+    if (newWordDe && newWordEn) {
+      if (currentMode === "vocabulary") {
+        vocabulary.push({ de: newWordDe, en: newWordEn });
+      } else {
+        phrases.push({ de: newWordDe, en: newWordEn });
+      }
+      saveToLocalStorage();
+      alert(`Wort "${newWordDe} ↔ ${newWordEn}" wurde hinzugefügt!`);
+      clearNewWordInputs();
+      showAllWords();
+    } else {
+      alert("Bitte füllen Sie beide Felder aus.");
+    }
+  });
+
+  document.getElementById("save-html-btn").addEventListener("click", function() {
+    const htmlContent = document.body.innerHTML;
+    localStorage.setItem("savedHTML", htmlContent);
+    alert("Das HTML wurde erfolgreich gespeichert!");
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </script>
+</body>
+</html>
